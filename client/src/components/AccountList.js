@@ -23,7 +23,9 @@ const AccountList = ({ accounts, loading, refreshAccounts }) => {
                                 <tr>
                                     <th>ID</th>
                                     <th>Owner</th>
-                                    <th>Account Number</th>
+                                    <th>Bank</th>
+                                    <th>Branch</th>
+                                    <th>RIB</th>
                                     <th className="text-end">Balance</th>
                                     <th>IBAN</th>
                                 </tr>
@@ -33,7 +35,9 @@ const AccountList = ({ accounts, loading, refreshAccounts }) => {
                                     <tr key={account.id}>
                                         <td>{account.id}</td>
                                         <td className="fw-bold">{account.ownerName}</td>
-                                        <td><code>{account.accountNumber}</code></td>
+                                        <td><span className="badge bg-secondary">{account.bankCode}</span></td>
+                                        <td><span className="badge bg-dark">{account.branchCode}</span></td>
+                                        <td><code>{account.itemsRIB}</code></td>
                                         <td className="text-end text-success fw-bold">
                                             {account.balance.toFixed(3)} TND
                                         </td>
