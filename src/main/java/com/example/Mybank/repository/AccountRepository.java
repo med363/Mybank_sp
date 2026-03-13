@@ -15,4 +15,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     // Find an account by IBAN
     Optional<Account> findByIban(String iban);
+
+    // Find all accounts belonging to a specific user
+    java.util.List<Account> findByUserId(Long userId);
 }

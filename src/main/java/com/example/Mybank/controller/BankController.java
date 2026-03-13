@@ -29,15 +29,32 @@ public class BankController {
         // Safely partial parsing for initialDeposit, handling both Integer and Double from JSON
         BigDecimal initialDeposit = new BigDecimal(payload.get("initialDeposit").toString());
         
-        Account account = bankService.createAccount(ownerName, initialDeposit);
-        return ResponseEntity.ok(account);
+        // Handle User Association
+        Long userId = null;
+        if (payload.containsKey("userId")) {
+            userId = Long.valueOf(payload.get("userId").toString());
+        }
+        
+        if (userId != null) {
+             return ResponseEntity.ok(bankService.createAccount(userId, ownerName, initialDeposit));
+        } else {
+             // Fallback for logic without user ID (though for this requirement, user ID is crucial)
+             // We can allow anonymous account creation or throw error.
+             // Given the requirement "register two user... own accounts", user ID is mandatory.
+             throw new RuntimeException("User ID is required to create an account.");
+        }
     }
 
     /**
      * Endpoint to retrieve all accounts.
+     * Supports filtering by userId via query parameter.
      */
     @GetMapping
-    public ResponseEntity<List<Account>> getAllAccounts() {
+    public ResponseEntity<List<Account>> getAllAccounts(@RequestParam(required = false) Long userId) {
+        if (userId != null) {
+            return ResponseEntity.ok(bankService.getAccountsByUser(userId));
+        }
+        // Admin or global view (optional: restriction)
         return ResponseEntity.ok(bankService.getAllAccounts());
     }
 

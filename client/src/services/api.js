@@ -26,8 +26,8 @@ const BankService = {
     },
 
     // 1. Create a new account
-    createAccount: (ownerName, initialDeposit) => {
-        return api.post('/accounts', { ownerName, initialDeposit });
+    createAccount: (userId, ownerName, initialDeposit) => {
+        return api.post('/accounts', { userId, ownerName, initialDeposit });
     },
 
     // 2. Get details of a specific account by ID
@@ -35,8 +35,11 @@ const BankService = {
         return api.get(`/accounts/${id}`);
     },
 
-    // 2.5 Get ALL accounts
-    getAllAccounts: () => {
+    // 2.5 Get ALL accounts for a user (or all if user is null/admin)
+    getAllAccounts: (userId = null) => {
+        if (userId) {
+            return api.get(`/accounts?userId=${userId}`);
+        }
         return api.get('/accounts');
     },
 

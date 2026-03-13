@@ -39,8 +39,8 @@ function App() {
         console.log("Logged in as:", userData.username);
         setUser(userData);
         setCurrentView('dashboard');
-        // Retrieve data immediately after login
-        fetchAccounts();
+        // Retrieve data immediately after login using the explicit ID
+        fetchAccounts(userData.id);
     };
 
     // Called when the user clicks 'Logout'
@@ -59,11 +59,16 @@ function App() {
     // --- Data Fetching ---
 
     // Function to fetch accounts from the backend (Only called when logged in)
-    const fetchAccounts = async () => {
+    const fetchAccounts = async (specificUserId) => {
+        // Use the passed ID or fallback to the state user ID
+        const userId = specificUserId || user?.id;
+        
+        if (!userId) return; // Cannot fetch without user ID
+
         setLoading(true);
         setError(null);
         try {
-            const response = await BankService.getAllAccounts();
+            const response = await BankService.getAllAccounts(userId);
             setAccounts(response.data);
         } catch (err) {
             console.error(err);
@@ -148,10 +153,10 @@ function App() {
                 <div className="row">
                     {/* Left Column: Actions */}
                     <div className="col-lg-4 mb-4">
-                        <CreateAccount onAccountCreated={fetchAccounts} />
+                        <CreateAccount user={user} onAccountCreated={() => fetchAccounts()} />
                         <TransferForm 
                             accounts={accounts} 
-                            onTransferCompleted={fetchAccounts} 
+                            onTransferCompleted={() => fetchAccounts()} 
                         />
                     </div>
                     
@@ -160,7 +165,7 @@ function App() {
                         <AccountList 
                             accounts={accounts} 
                             loading={loading}
-                            refreshAccounts={fetchAccounts}
+                            refreshAccounts={() => fetchAccounts()}
                         />
 
                         <div className="alert alert-info mt-3 shadow-sm border-0">

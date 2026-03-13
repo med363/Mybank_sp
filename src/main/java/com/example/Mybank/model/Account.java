@@ -43,5 +43,9 @@ public class Account {
     @Column(unique = true)
     private String iban; // International Bank Account Number
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id") // Foreign key to User table
+    private User user; // The user who owns this account
+
     private LocalDateTime createdAt = LocalDateTime.now(); // Account creation timestamp
 }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import BankService from '../services/api';
 
-const CreateAccount = ({ onAccountCreated }) => {
+const CreateAccount = ({ user, onAccountCreated }) => {
     const [name, setName] = useState('');
     const [deposit, setDeposit] = useState('');
     const [loading, setLoading] = useState(false);
@@ -14,7 +14,8 @@ const CreateAccount = ({ onAccountCreated }) => {
 
         try {
             const initialDeposit = deposit ? parseFloat(deposit) : 0;
-            const response = await BankService.createAccount(name, initialDeposit);
+            // Pass user.id to create account
+            const response = await BankService.createAccount(user.id, name, initialDeposit);
             // Notify parent component to refresh the list
             onAccountCreated(response.data);
             setName('');

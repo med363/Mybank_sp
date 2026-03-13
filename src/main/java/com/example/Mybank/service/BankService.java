@@ -3,8 +3,10 @@ package com.example.Mybank.service;
 import com.example.Mybank.model.Account;
 import com.example.Mybank.model.Transaction;
 import com.example.Mybank.model.TransactionType;
+import com.example.Mybank.model.User;
 import com.example.Mybank.repository.AccountRepository;
 import com.example.Mybank.repository.TransactionRepository;
+import com.example.Mybank.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,14 +23,19 @@ public class BankService {
 
     private final AccountRepository accountRepository; // Injecting Account Repository
     private final TransactionRepository transactionRepository; // Injecting Transaction Repository
+    private final UserRepository userRepository; // Injecting User Repository
 
     /**
-     * Create a new bank account for a given owner.
+     * Create a new bank account for a given user.
      * Generates account number, RIB, and IBAN automatically (Tunisian Standard).
      */
     @Transactional
-    public Account createAccount(String ownerName, BigDecimal initialDeposit) {
+    public Account createAccount(Long userId, String ownerName, BigDecimal initialDeposit) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
         Account account = new Account();
+        account.setUser(user);
         account.setOwnerName(ownerName);
         account.setBalance(initialDeposit);
 
@@ -63,9 +70,14 @@ public class BankService {
             recordTransaction(savedAccount, initialDeposit, TransactionType.DEPOSIT);
         }
 
-        System.out.println("Account created successfully with ID: " + savedAccount.getId()); // Logging for easier debugging
-
         return savedAccount;
+    }
+
+    /**
+     * Retrieve all accounts for a specific user
+     */
+    public List<Account> getAccountsByUser(Long userId) {
+        return accountRepository.findByUserId(userId);
     }
 
     /**
@@ -131,6 +143,7 @@ public class BankService {
 
     /**
      * Transfer money between two accounts
+     * Applies 5% commission if accounts belong to different users.
      */
     @Transactional
     public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
@@ -139,25 +152,42 @@ public class BankService {
             throw new IllegalArgumentException("Transfer amount must be positive");
         }
 
-        // Check if both accounts exist before attempting operations to avoid partial failures or confusing errors
-        // Although checking existence adds a DB call, it provides clearer error messages for transfers.
-        if (!accountRepository.existsById(fromAccountId)) {
-            throw new RuntimeException("Source account (ID " + fromAccountId + ") not found");
-        }
-        if (!accountRepository.existsById(toAccountId)) {
-            throw new RuntimeException("Destination account (ID " + toAccountId + ") not found");
-        }
+        Account fromAccount = accountRepository.findById(fromAccountId)
+            .orElseThrow(() -> new RuntimeException("Source account (ID " + fromAccountId + ") not found"));
+        Account toAccount = accountRepository.findById(toAccountId)
+            .orElseThrow(() -> new RuntimeException("Destination account (ID " + toAccountId + ") not found"));
 
-        // Perform the transfer
-        // 1. Withdraw from source
-        Account fromAccount = withdraw(fromAccountId, amount);
+        // Determine Commission Logic
+        BigDecimal commission = BigDecimal.ZERO;
         
-        // 2. Deposit to destination
-        deposit(toAccountId, amount);
+        // Check if both accounts have users linked and if they are different
+        boolean fromHasUser = fromAccount.getUser() != null;
+        boolean toHasUser = toAccount.getUser() != null;
+        
+        if (fromHasUser && toHasUser && !fromAccount.getUser().getId().equals(toAccount.getUser().getId())) {
+             // Different users -> Apply 5% Commission
+             commission = amount.multiply(new BigDecimal("0.05"));
+        }
+        
+        BigDecimal totalDeduction = amount.add(commission);
 
-        // 3. Record transfer history
-        // Note: The withdraw() and deposit() methods already record separate transactions.
-        // We can add a specific TRANSFER record if needed for the sender to track destination.
+        // Check Balance
+        if (fromAccount.getBalance().compareTo(totalDeduction) < 0) {
+            throw new RuntimeException("Insufficient balance including commission of " + commission + " TND");
+        }
+
+        // Perform Transfer
+        // 1. Deduct from source
+        fromAccount.setBalance(fromAccount.getBalance().subtract(totalDeduction));
+        accountRepository.save(fromAccount);
+        recordTransaction(fromAccount, totalDeduction, TransactionType.WITHDRAWAL); // Record full deduction
+        
+        // 2. Add to destination (original amount)
+        toAccount.setBalance(toAccount.getBalance().add(amount));
+        accountRepository.save(toAccount);
+        recordTransaction(toAccount, amount, TransactionType.DEPOSIT);
+
+        // 3. Record transfer log if needed specifically
         recordTransaction(fromAccount, amount, TransactionType.TRANSFER); 
     }
     
