@@ -18,17 +18,24 @@ public class BankController {
 
     private final BankService bankService;
 
-    // Create a new bank account
+    /**
+     * Endpoint to create a new bank account.
+     * Expects a JSON payload with "ownerName" and "initialDeposit".
+     * Example: { "ownerName": "John", "initialDeposit": 100.0 }
+     */
     @PostMapping
     public ResponseEntity<Account> createAccount(@RequestBody Map<String, Object> payload) {
         String ownerName = (String) payload.get("ownerName");
+        // Safely partial parsing for initialDeposit, handling both Integer and Double from JSON
         BigDecimal initialDeposit = new BigDecimal(payload.get("initialDeposit").toString());
         
         Account account = bankService.createAccount(ownerName, initialDeposit);
         return ResponseEntity.ok(account);
     }
 
-    // Get account details
+    /**
+     * Endpoint to retrieve account details by ID.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Account> getAccount(@PathVariable Long id) {
         return bankService.getAccount(id)
@@ -36,27 +43,38 @@ public class BankController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Get account transactions
+    /**
+     * Endpoint to retrieve transaction history for a specific account.
+     */
     @GetMapping("/{id}/transactions")
     public ResponseEntity<List<Transaction>> getTransactions(@PathVariable Long id) {
         return ResponseEntity.ok(bankService.getTransactionHistory(id));
     }
 
-    // Deposit money
+    /**
+     * Endpoint to deposit money into an account.
+     * Expects JSON: { "amount": 50.0 }
+     */
     @PostMapping("/{id}/deposit")
     public ResponseEntity<Account> deposit(@PathVariable Long id, @RequestBody Map<String, BigDecimal> payload) {
         BigDecimal amount = payload.get("amount");
         return ResponseEntity.ok(bankService.deposit(id, amount));
     }
 
-    // Withdraw money
+    /**
+     * Endpoint to withdraw money from an account.
+     * Expects JSON: { "amount": 20.0 }
+     */
     @PostMapping("/{id}/withdraw")
     public ResponseEntity<Account> withdraw(@PathVariable Long id, @RequestBody Map<String, BigDecimal> payload) {
         BigDecimal amount = payload.get("amount");
         return ResponseEntity.ok(bankService.withdraw(id, amount));
     }
 
-    // Transfer money
+    /**
+     * Endpoint to transfer money between two accounts.
+     * Expects JSON: { "fromAccountId": 1, "toAccountId": 2, "amount": 30.0 }
+     */
     @PostMapping("/transfer")
     public ResponseEntity<String> transfer(@RequestBody Map<String, Object> payload) {
         Long fromId = Long.valueOf(payload.get("fromAccountId").toString());
