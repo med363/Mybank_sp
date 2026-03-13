@@ -6,6 +6,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // Import for password encoding
+import org.springframework.security.crypto.password.PasswordEncoder;   // Import for interface
 
 /**
  * Security Configuration for the Bank Application.
@@ -43,5 +45,16 @@ public class SecurityConfig {
             ;
 
         return http.build();
+    }
+
+    /**
+     * PasswordEncoder Bean
+     * This defines the hashing algorithm used for passwords (BCrypt).
+     * We need this to securely hash passwords when registering users 
+     * and when verifying passwords during login.
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
