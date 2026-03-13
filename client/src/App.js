@@ -28,7 +28,8 @@ function App() {
     const [currentView, setCurrentView] = useState('login');
     
     // Dashboard Data States
-    const [accounts, setAccounts] = useState([]);
+    const [myAccounts, setMyAccounts] = useState([]);
+    const [allAccounts, setAllAccounts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -46,7 +47,8 @@ function App() {
     // Called when the user clicks 'Logout'
     const handleLogout = () => {
         setUser(null);
-        setAccounts([]); // Clear sensitive data
+        setMyAccounts([]); // Clear sensitive data
+        setAllAccounts([]); 
         setCurrentView('login');
     };
 
@@ -61,15 +63,21 @@ function App() {
     // Function to fetch accounts from the backend (Only called when logged in)
     const fetchAccounts = async (specificUserId) => {
         // Use the passed ID or fallback to the state user ID
-        const userId = specificUserId || user?.id;
+        const currentUserId = specificUserId || user?.id;
         
-        if (!userId) return; // Cannot fetch without user ID
+        if (!currentUserId) return; // Cannot fetch without user ID
 
         setLoading(true);
         setError(null);
         try {
-            const response = await BankService.getAllAccounts(userId);
-            setAccounts(response.data);
+            // Fetch everything to support transfers
+            const response = await BankService.getAllAccounts(); // No user ID filter = get all
+            const all = response.data;
+            setAllAccounts(all);
+            
+            // Filter locally for "My Accounts" view
+            const mine = all.filter(account => account.user && account.user.id === currentUserId);
+            setMyAccounts(mine);
         } catch (err) {
             console.error(err);
             setError('Failed to fetch accounts. Please check your backend is running.');
@@ -155,7 +163,9 @@ function App() {
                     <div className="col-lg-4 mb-4">
                         <CreateAccount user={user} onAccountCreated={() => fetchAccounts()} />
                         <TransferForm 
-                            accounts={accounts} 
+                            currentUser={user}
+                            myAccounts={myAccounts}
+                            allAccounts={allAccounts}
                             onTransferCompleted={() => fetchAccounts()} 
                         />
                     </div>
@@ -163,7 +173,7 @@ function App() {
                     {/* Right Column: Information */}
                     <div className="col-lg-8">
                         <AccountList 
-                            accounts={accounts} 
+                            accounts={myAccounts} 
                             loading={loading}
                             refreshAccounts={() => fetchAccounts()}
                         />

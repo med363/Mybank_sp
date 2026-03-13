@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import BankService from '../services/api';
 
-const TransferForm = ({ accounts, onTransferCompleted }) => {
+const TransferForm = ({ currentUser, myAccounts, allAccounts, onTransferCompleted }) => {
     const [fromAccount, setFromAccount] = useState('');
     const [toAccount, setToAccount] = useState('');
     const [amount, setAmount] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+
+    // Group accounts for the "To Account" dropdown
+    // Note: allAccounts might be undefined initially
+    const safeAllAccounts = allAccounts || [];
+    
+    const accountsInMyBank = safeAllAccounts.filter(acc => acc.user && acc.user.id === currentUser.id);
+    const accountsInOtherBank = safeAllAccounts.filter(acc => !acc.user || acc.user.id !== currentUser.id);
 
     const handleTransfer = async (e) => {
         e.preventDefault();
@@ -41,7 +48,7 @@ const TransferForm = ({ accounts, onTransferCompleted }) => {
                 
                 <form onSubmit={handleTransfer}>
                     <div className="mb-3">
-                        <label className="form-label">From Account</label>
+                        <label className="form-label">From Account (My Bank)</label>
                         <select 
                             className="form-select" 
                             value={fromAccount} 
@@ -49,7 +56,8 @@ const TransferForm = ({ accounts, onTransferCompleted }) => {
                             required
                         >
                             <option value="">Select Account</option>
-                            {accounts.map(acc => (
+                            {/* Assuming myAccounts is passed correctly from App.js */}
+                            {myAccounts && myAccounts.map(acc => (
                                 <option key={acc.id} value={acc.id}>
                                     ID: {acc.id} - {acc.ownerName} ({acc.balance.toFixed(3)} TND)
                                 </option>
@@ -58,15 +66,29 @@ const TransferForm = ({ accounts, onTransferCompleted }) => {
                     </div>
                     
                     <div className="mb-3">
-                        <label className="form-label">To Account ID</label>
-                        <input 
-                            type="number" 
-                            className="form-control" 
-                            value={toAccount}
+                        <label className="form-label">To Account</label>
+                        <select 
+                            className="form-select" 
+                            value={toAccount} 
                             onChange={(e) => setToAccount(e.target.value)}
                             required
-                            placeholder="Enter Destination Account ID"
-                        />
+                        >
+                            <option value="">Select Destination Account</option>
+                            <optgroup label="My Accounts (No Commission)">
+                                {accountsInMyBank.map(acc => (
+                                    <option key={acc.id} value={acc.id}>
+                                        ID: {acc.id} - {acc.ownerName}
+                                    </option>
+                                ))}
+                            </optgroup>
+                            <optgroup label="Other Accounts (5% Commission)">
+                                {accountsInOtherBank.map(acc => (
+                                    <option key={acc.id} value={acc.id}>
+                                        ID: {acc.id} - {acc.ownerName}
+                                    </option>
+                                ))}
+                            </optgroup>
+                        </select>
                     </div>
                     
                     <div className="mb-3">

@@ -37,10 +37,10 @@ const BankService = {
 
     // 2.5 Get ALL accounts for a user (or all if user is null/admin)
     getAllAccounts: (userId = null) => {
-        if (userId) {
-            return api.get(`/accounts?userId=${userId}`);
-        }
-        return api.get('/accounts');
+        // Here we always fetch all accounts to facilitate transfers between users
+        // The backend supports filtering, but for the UI dropdowns we need everything.
+        // We'll filter on the client side.
+        return api.get('/accounts'); 
     },
 
     // 3. Get transaction history for an account
