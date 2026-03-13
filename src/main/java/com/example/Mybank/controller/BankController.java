@@ -34,6 +34,14 @@ public class BankController {
     }
 
     /**
+     * Endpoint to retrieve all accounts.
+     */
+    @GetMapping
+    public ResponseEntity<List<Account>> getAllAccounts() {
+        return ResponseEntity.ok(bankService.getAllAccounts());
+    }
+
+    /**
      * Endpoint to retrieve account details by ID.
      */
     @GetMapping("/{id}")

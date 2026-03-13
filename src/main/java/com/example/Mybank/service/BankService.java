@@ -70,6 +70,13 @@ public class BankService {
     public Optional<Account> getAccount(Long id) {
         return accountRepository.findById(id);
     }
+
+    /**
+     * Retrieve all accounts
+     */
+    public List<Account> getAllAccounts() {
+        return accountRepository.findAll();
+    }
     
     /**
      * Helper to retrieve an account by Account Number
