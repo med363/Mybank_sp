@@ -51,7 +51,7 @@ const TransferForm = ({ accounts, onTransferCompleted }) => {
                             <option value="">Select Account</option>
                             {accounts.map(acc => (
                                 <option key={acc.id} value={acc.id}>
-                                    ID: {acc.id} - {acc.ownerName} (€{acc.balance.toFixed(2)})
+                                    ID: {acc.id} - {acc.ownerName} ({acc.balance.toFixed(3)} TND)
                                 </option>
                             ))}
                         </select>
@@ -70,16 +70,16 @@ const TransferForm = ({ accounts, onTransferCompleted }) => {
                     </div>
                     
                     <div className="mb-3">
-                        <label className="form-label">Amount (€)</label>
+                        <label className="form-label">Amount (TND)</label>
                         <input 
                             type="number" 
                             className="form-control" 
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
-                            min="0.01"
-                            step="0.01"
+                            min="0.001"
+                            step="0.001"
                             required
-                            placeholder="0.00"
+                            placeholder="0.000"
                         />
                     </div>
                     

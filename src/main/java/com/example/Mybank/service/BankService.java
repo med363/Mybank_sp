@@ -24,7 +24,7 @@ public class BankService {
 
     /**
      * Create a new bank account for a given owner.
-     * Generates account number, RIB, and IBAN automatically.
+     * Generates account number, RIB, and IBAN automatically (Tunisian Standard).
      */
     @Transactional
     public Account createAccount(String ownerName, BigDecimal initialDeposit) {
@@ -32,24 +32,28 @@ public class BankService {
         account.setOwnerName(ownerName);
         account.setBalance(initialDeposit);
 
-        // Generate comprehensive banking details
-        String bankCode = "12345";
-        String branchCode = "00001";
+        // Generate comprehensive banking details (Tunisian format)
+        // Bank Code: 2 digits (e.g., 10 for STB or similar)
+        String bankCode = "10"; 
+        // Branch Code: 3 digits
+        String branchCode = "001";
+        // Account Number: 13 digits
         String accountNumber = generateAccountNumber();
         
         // Calculate RIB Key
         String ribKey = calculateRibKey(bankCode, branchCode, accountNumber);
         
         // Construct RIB and IBAN
+        // RIB: Bank(2) + Branch(3) + Account(13) + Key(2) = 20 digits
         String rib = bankCode + branchCode + accountNumber + ribKey;
-        String iban = generateIban("FR", bankCode, branchCode, accountNumber, ribKey);
+        String iban = generateIban("TN", bankCode, branchCode, accountNumber, ribKey);
 
         account.setAccountNumber(accountNumber);
         account.setBankCode(bankCode);
         account.setBranchCode(branchCode);
         account.setRibKey(ribKey);
         account.setItemsRIB(rib);
-        account.setIban(iban); // Assuming French accounts for this example
+        account.setIban(iban); 
 
         // Save the account
         Account savedAccount = accountRepository.save(account);
@@ -176,45 +180,43 @@ public class BankService {
     }
 
     private String generateAccountNumber() {
-        // Generate a random 11-digit string
+        // Generate a random 13-digit string (Tunisian Standard)
         Random random = new Random();
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 11; i++) {
+        for (int i = 0; i < 13; i++) {
             sb.append(random.nextInt(10));
         }
         return sb.toString();
     }
     
-    // RIB Key Calculation: 97 - ((89 * BankCode + 15 * BranchCode + 3 * AccountNumber) % 97)
+    // RIB Key Calculation: 97 - (Numeric representation of (BankCode + BranchCode + AccountNumber + "00") MOD 97)
     private String calculateRibKey(String bankCode, String branchCode, String accountNumber) {
-        // Extended RIB Key Calculation using BigInteger for safety
-        // Formula: 97 - ((89 * Bank + 15 * Branch + 3 * Account) % 97) is approximation
-        // Better: Concatenate Bank Code + Branch Code + Account Number + "00"
-        // Convert to BigInteger and calculate Modulo 97
-        // Key = 97 - Remainder
-        
-        // Ensure inputs are numeric only
+        // Concatenate Bank Code + Branch Code + Account Number + "00"
         String b = bankCode + branchCode + accountNumber + "00";
         BigInteger bigInt = new BigInteger(b);
         int remainder = bigInt.mod(BigInteger.valueOf(97)).intValue();
         int key = 97 - remainder;
         
-        return String.format("%02d", key == 97 ? 0 : key);
+        // If remainder is 0, key is 97. Key ranges from 01 to 97.
+        return String.format("%02d", key);
     }
     
-    // IBAN generation (simplified for FR)
+    // IBAN generation (Tunisian Standard)
     // Formula: CheckDigits = 98 - (Numeric representation of (BBAN + CountryCode + 00)) MOD 97
     private String generateIban(String countryCode, String bankCode, String branchCode, String accountNumber, String ribKey) {
-        // BBAN for France is BankCode (5) + BranchCode (5) + AccountNumber (11) + Key (2)
+        // BBAN for Tunisia is BankCode(2) + BranchCode(3) + AccountNumber(13) + Key(2)
         String bban = bankCode + branchCode + accountNumber + ribKey;
         
-        // Country Code to numeric (A=10, B=11... F=15... R=27)
-        // FR -> 1527
-        // We append '00' at the end for the check digit calculation
-        // But for IBAN Check Digit calculation, the country code and check digits are moved to the END.
-        // So we take (BBAN + CountryCodeNumerics + "00")
-        
-        String countryNumeric = "1527"; // FR
+        // Country Code to numeric (A=10, ... T=29, N=23)
+        // TN -> 2923
+        String countryNumeric;
+        if ("TN".equals(countryCode)) {
+            countryNumeric = "2923"; 
+        } else {
+             // Fallback to FR behavior or throw error, but for this task we assume TN
+             countryNumeric = "1527"; // FR
+        }
+
         String checkString = bban + countryNumeric + "00";
         
         BigInteger ibanNumber = new BigInteger(checkString);

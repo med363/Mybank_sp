@@ -35,7 +35,7 @@ const AccountList = ({ accounts, loading, refreshAccounts }) => {
                                         <td className="fw-bold">{account.ownerName}</td>
                                         <td><code>{account.accountNumber}</code></td>
                                         <td className="text-end text-success fw-bold">
-                                            €{account.balance.toFixed(2)}
+                                            {account.balance.toFixed(3)} TND
                                         </td>
                                         <td><small className="text-muted">{account.iban}</small></td>
                                     </tr>

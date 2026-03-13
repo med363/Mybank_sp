@@ -32,8 +32,8 @@ public class Account {
     @Column(nullable = false)
     private BigDecimal balance; // Current balance of the account
 
-    private String bankCode = "12345"; // Fixed bank code (could be dynamic)
-    private String branchCode = "00001"; // Fixed branch code
+    private String bankCode = "10"; // Default Bank Code (Tunisian format example)
+    private String branchCode = "001"; // Default Branch Code
 
     private String ribKey; // RIB Key (2 digits)
     

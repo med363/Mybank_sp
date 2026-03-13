@@ -47,15 +47,15 @@ const CreateAccount = ({ onAccountCreated }) => {
                         />
                     </div>
                     <div className="mb-3">
-                        <label className="form-label">Initial Deposit (€)</label>
+                        <label className="form-label">Initial Deposit (TND)</label>
                         <input 
                             type="number" 
                             className="form-control" 
                             value={deposit}
                             onChange={(e) => setDeposit(e.target.value)}
                             min="0"
-                            step="0.01"
-                            placeholder="0.00"
+                            step="0.001"
+                            placeholder="0.000"
                         />
                     </div>
                     <button type="submit" className="btn btn-primary" disabled={loading}>
