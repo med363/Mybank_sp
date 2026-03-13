@@ -12,13 +12,15 @@ import java.time.LocalDateTime;
  * Stores transaction type, amount, date, and associated account.
  */
 @Entity
+@Table(name = "transactions") // Rename table to avoid SQL reserved keyword "TRANSACTION"
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Transaction {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_seq_gen")
+    @SequenceGenerator(name = "transaction_seq_gen", sequenceName = "transactions_id_seq", allocationSize = 1)
     private Long id;
 
     @Column(nullable = false)

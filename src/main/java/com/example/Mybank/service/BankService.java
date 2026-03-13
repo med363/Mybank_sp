@@ -59,6 +59,8 @@ public class BankService {
             recordTransaction(savedAccount, initialDeposit, TransactionType.DEPOSIT);
         }
 
+        System.out.println("Account created successfully with ID: " + savedAccount.getId()); // Logging for easier debugging
+
         return savedAccount;
     }
 
@@ -82,7 +84,7 @@ public class BankService {
     @Transactional
     public Account deposit(Long accountId, BigDecimal amount) {
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException("Account with ID " + accountId + " not found"));
         
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Deposit amount must be positive");
@@ -100,14 +102,14 @@ public class BankService {
     @Transactional
     public Account withdraw(Long accountId, BigDecimal amount) {
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException("Account with ID " + accountId + " not found"));
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Withdrawal amount must be positive");
         }
         
         if (account.getBalance().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient balance");
+            throw new RuntimeException("Insufficient balance in account " + accountId);
         }
 
         account.setBalance(account.getBalance().subtract(amount));
@@ -121,16 +123,31 @@ public class BankService {
      */
     @Transactional
     public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
-        // Withdraw from source
-        withdraw(fromAccountId, amount);
+        // Validate amounts
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be positive");
+        }
+
+        // Check if both accounts exist before attempting operations to avoid partial failures or confusing errors
+        // Although checking existence adds a DB call, it provides clearer error messages for transfers.
+        if (!accountRepository.existsById(fromAccountId)) {
+            throw new RuntimeException("Source account (ID " + fromAccountId + ") not found");
+        }
+        if (!accountRepository.existsById(toAccountId)) {
+            throw new RuntimeException("Destination account (ID " + toAccountId + ") not found");
+        }
+
+        // Perform the transfer
+        // 1. Withdraw from source
+        Account fromAccount = withdraw(fromAccountId, amount);
         
-        // Deposit to destination
+        // 2. Deposit to destination
         deposit(toAccountId, amount);
 
-        // Ideally, we might want to link these transactions or note them specially, 
-        // but for now, individual records suffice.
-        Account fromAccount = accountRepository.findById(fromAccountId).get();
-        recordTransaction(fromAccount, amount, TransactionType.TRANSFER); // Add transfer record
+        // 3. Record transfer history
+        // Note: The withdraw() and deposit() methods already record separate transactions.
+        // We can add a specific TRANSFER record if needed for the sender to track destination.
+        recordTransaction(fromAccount, amount, TransactionType.TRANSFER); 
     }
     
     /**

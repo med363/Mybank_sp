@@ -77,6 +77,11 @@ public class BankController {
      */
     @PostMapping("/transfer")
     public ResponseEntity<String> transfer(@RequestBody Map<String, Object> payload) {
+        // Validate input presence to avoid NullPointerException (which causes 500)
+        if (!payload.containsKey("fromAccountId") || !payload.containsKey("toAccountId") || !payload.containsKey("amount")) {
+            throw new RuntimeException("Missing required fields: fromAccountId, toAccountId, or amount");
+        }
+
         Long fromId = Long.valueOf(payload.get("fromAccountId").toString());
         Long toId = Long.valueOf(payload.get("toAccountId").toString());
         BigDecimal amount = new BigDecimal(payload.get("amount").toString());

@@ -12,13 +12,15 @@ import java.time.LocalDateTime;
  * Stores account details like owner, balance, IBAN, RIB.
  */
 @Entity
+@Table(name = "accounts") // Rename table to avoid reserved keywords
 @Data // Generates getters, setters, toString, equals, hashCode
 @NoArgsConstructor // Generates a no-args constructor
 @AllArgsConstructor // Generates a constructor with all args
 public class Account {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "account_seq_gen")
+    @SequenceGenerator(name = "account_seq_gen", sequenceName = "accounts_id_seq", allocationSize = 1)
     private Long id;
 
     @Column(unique = true, nullable = false)

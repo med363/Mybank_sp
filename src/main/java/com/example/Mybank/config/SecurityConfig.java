@@ -32,15 +32,14 @@ public class SecurityConfig {
                 // Allow all requests to our API endpoints starting with /api/
                 // This means 'create account', 'transfer', etc. can be called without logging in.
                 .requestMatchers("/api/**").permitAll()
+                .requestMatchers("/error").permitAll() // Allow error responses to be shown
                 
                 // For any other request (if we add more), strictly require authentication.
                 // This is a good practice: "deny by default, allow by exception".
                 .anyRequest().authenticated()
             )
-            
-            // Disable default creating of session (stateless) - useful for REST APIs
-             // However, for simple testing we can leave session management as default or configure it.
-             // We'll keep it simple for now. 
+            .httpBasic(AbstractHttpConfigurer::disable) // Disable basic auth just in case
+            .formLogin(AbstractHttpConfigurer::disable) // Disable form login
             ;
 
         return http.build();
