@@ -1,0 +1,27 @@
+services:
+  # The Spring Boot Application Service
+  app:
+    build: . # Build the image from the Dockerfile in the current directory
+    container_name: mybank-app
+    ports:
+      - "8080:8080" # Expose port 8080 to the host
+    environment:
+      # Override Spring Boot properties using environment variables
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/mydatabase
+      - SPRING_DATASOURCE_USERNAME=myuser
+      - SPRING_DATASOURCE_PASSWORD=secret
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      - postgres # Ensure postgres starts before the app
+
+  # The PostgreSQL Database Service
+  postgres:
+    image: 'postgres:latest'
+    container_name: mybank-postgres
+    environment:
+      - 'POSTGRES_DB=mydatabase'
+      - 'POSTGRES_PASSWORD=secret'
+      - 'POSTGRES_USER=myuser'
+    ports:
+      - '5432:5432' # Expose port 5432 to the host for external tools (e.g., pgAdmin)
+    restart: always
